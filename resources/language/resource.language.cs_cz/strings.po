@@ -1,0 +1,63 @@
+# XBMC Media Center language file
+# Addon Name: YAWsP
+# Addon id: plugin.video.yawsp
+# Addon Provider: cache-sk
+
+msgid ""
+msgstr ""
+
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: cs\n"
+
+msgctxt "#30010"
+msgid "Search"
+msgstr "Vyhledávání"
+
+msgctxt "#30030"
+msgid "Account"
+msgstr "Účet"
+
+msgctxt "#30031"
+msgid "Username"
+msgstr "Uživatelské jméno"
+
+msgctxt "#30032"
+msgid "Password"
+msgstr "Heslo"
+
+msgctxt "#30101"
+msgid "To use this plugin, you must enter Webshare account in the settings."
+msgstr "Pro použití tohoto pluginu nutné zadat v nastaveních konto pro Webshare."
+
+msgctxt "#30102"
+msgid "Invalid login details!"
+msgstr "Neplatné přihlašovací údaje!"
+
+msgctxt "#30103"
+msgid "You do not have a valid VIP."
+msgstr "Nemáte platné VIP."
+
+msgctxt "#30201"
+msgid "Search"
+msgstr "Vyhledávání"
+
+msgctxt "#30202"
+msgid "Queue"
+msgstr "Chci si stáhnout"
+
+msgctxt "#30203"
+msgid "History"
+msgstr "Historie stahování"
+
+msgctxt "#30204"
+msgid "Settings"
+msgstr "Nastavení"
+
+msgctxt "#30211"
+msgid "Play"
+msgstr "Přehrát"
+
+msgctxt "#30212"
+msgid "Download"
+msgstr "Stáhnout"
+

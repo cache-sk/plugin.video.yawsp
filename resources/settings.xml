@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+    <category label="30010">
+        <setting type="lsep" label="30010" />
+    </category>
+    <category label="30030">
+        <setting type="lsep" label="30030" />
+        <setting label="30031" id="wsuser" type="text" default="" />
+        <setting label="30032" id="wspass" type="text" default="" option="hidden" />
+        <setting id="token" type="text" visible="false" />
+    </category>
+</settings>
