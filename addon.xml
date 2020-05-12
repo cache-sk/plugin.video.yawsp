@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.yawsp" name="YAWsP" version="0.0.1" provider-name="cache-sk">
+<addon id="plugin.video.yawsp" name="YAWsP" version="0.0.2" provider-name="cache-sk">
     <requires>
         <import addon="xbmc.python" version="2.19.0"/>
         <import addon="script.module.requests" version="2.18.4"/>
@@ -8,13 +8,13 @@
         <provides>video</provides>
     </extension>
     <extension point="xbmc.addon.metadata">
-        <summary lang="en_GB">Yet Another Webshare Plugin - play content from web storage</summary>
+        <summary lang="en_GB">Yet Another Webhare Plugin - play content from web storage</summary>
         <summary lang="sk_SK">Yet Another Webshare Plugin - prehrávanie obsahu z webového úložiska</summary>
         <summary lang="cs_CZ">Yet Another Webshare Plugin - přehrávání obsahu z webového úložiště</summary>
         <description lang="en_GB"></description>
         <language></language>
         <platform>all</platform>
-        <license>GPL 2.0</license>
+        <license>AGPL 3.0</license>
         <website></website>
         <source></source>
         <news></news>

@@ -54,10 +54,10 @@ msgid "Settings"
 msgstr ""
 
 msgctxt "#30211"
-msgid "Play"
+msgid "File information"
 msgstr ""
 
 msgctxt "#30212"
-msgid "Download"
+msgid "Download file"
 msgstr ""
 

@@ -54,10 +54,10 @@ msgid "Settings"
 msgstr "Nastavení"
 
 msgctxt "#30211"
-msgid "Play"
-msgstr "Přehrát"
+msgid "File information"
+msgstr "Informace o souboru"
 
 msgctxt "#30212"
-msgid "Download"
-msgstr "Stáhnout"
+msgid "Download file"
+msgstr "Stáhnout soubor"
 
