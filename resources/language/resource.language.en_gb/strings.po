@@ -13,6 +13,70 @@ msgctxt "#30010"
 msgid "Search"
 msgstr ""
 
+msgctxt "#30011"
+msgid "Category"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Everything"
+msgstr ""
+
+msgctxt "#30013"
+msgid "Video"
+msgstr ""
+
+msgctxt "#30014"
+msgid "Images"
+msgstr ""
+
+msgctxt "#30015"
+msgid "Audio"
+msgstr ""
+
+msgctxt "#30016"
+msgid "Archives"
+msgstr ""
+
+msgctxt "#30017"
+msgid "Documents"
+msgstr ""
+
+msgctxt "#30018"
+msgid "Adult"
+msgstr ""
+
+msgctxt "#30020"
+msgid "Sort"
+msgstr ""
+
+msgctxt "#30021"
+msgid "Relevance"
+msgstr ""
+
+msgctxt "#30022"
+msgid "Recent"
+msgstr ""
+
+msgctxt "#30023"
+msgid "Rating"
+msgstr ""
+
+msgctxt "#30024"
+msgid "Largest"
+msgstr ""
+
+msgctxt "#30025"
+msgid "Smallest"
+msgstr ""
+
+msgctxt "#30028"
+msgid "Results on page"
+msgstr ""
+
+msgctxt "#30029"
+msgid "Memorized searches"
+msgstr ""
+
 msgctxt "#30030"
 msgid "Account"
 msgstr ""
@@ -53,11 +117,27 @@ msgctxt "#30204"
 msgid "Settings"
 msgstr ""
 
+msgctxt "#30205"
+msgid "New search"
+msgstr ""
+
+msgctxt "#30206"
+msgid "previous page"
+msgstr ""
+
+msgctxt "#30207"
+msgid "next page"
+msgstr ""
+
 msgctxt "#30211"
 msgid "File information"
 msgstr ""
 
 msgctxt "#30212"
 msgid "Download file"
+msgstr ""
+
+msgctxt "#30213"
+msgid "Remove from history"
 msgstr ""
 

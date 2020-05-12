@@ -13,6 +13,70 @@ msgctxt "#30010"
 msgid "Search"
 msgstr "Vyhledávání"
 
+msgctxt "#30011"
+msgid "Category"
+msgstr "Kategorie"
+
+msgctxt "#30012"
+msgid "Everything"
+msgstr "Všechno"
+
+msgctxt "#30013"
+msgid "Video"
+msgstr "Video"
+
+msgctxt "#30014"
+msgid "Images"
+msgstr "Obrázky"
+
+msgctxt "#30015"
+msgid "Audio"
+msgstr "Audio"
+
+msgctxt "#30016"
+msgid "Archives"
+msgstr "Archivy"
+
+msgctxt "#30017"
+msgid "Documents"
+msgstr "Dokumenty"
+
+msgctxt "#30018"
+msgid "Adult"
+msgstr "Pro dospělé"
+
+msgctxt "#30020"
+msgid "Sort"
+msgstr "Třídění"
+
+msgctxt "#30021"
+msgid "Relevance"
+msgstr "Relevance"
+
+msgctxt "#30022"
+msgid "Recent"
+msgstr "Nejnovější"
+
+msgctxt "#30023"
+msgid "Rating"
+msgstr "Hodnocení"
+
+msgctxt "#30024"
+msgid "Largest"
+msgstr "Největší"
+
+msgctxt "#30025"
+msgid "Smallest"
+msgstr "Nejmenší"
+
+msgctxt "#30028"
+msgid "Results on page"
+msgstr "Výsledků na stránku"
+
+msgctxt "#30029"
+msgid "Memorized searches"
+msgstr "Zapamatovaných hledání"
+
 msgctxt "#30030"
 msgid "Account"
 msgstr "Účet"
@@ -53,6 +117,18 @@ msgctxt "#30204"
 msgid "Settings"
 msgstr "Nastavení"
 
+msgctxt "#30205"
+msgid "New search"
+msgstr "Nové hledání"
+
+msgctxt "#30206"
+msgid "previous page"
+msgstr "předchozí stránka"
+
+msgctxt "#30207"
+msgid "next page"
+msgstr "následující stránka"
+
 msgctxt "#30211"
 msgid "File information"
 msgstr "Informace o souboru"
@@ -60,4 +136,8 @@ msgstr "Informace o souboru"
 msgctxt "#30212"
 msgid "Download file"
 msgstr "Stáhnout soubor"
+
+msgctxt "#30213"
+msgid "Remove from history"
+msgstr "Smazat z historie"
 
