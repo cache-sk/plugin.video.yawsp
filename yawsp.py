@@ -14,7 +14,7 @@ from urllib import urlencode
 from urlparse import parse_qsl, urlparse
 from xml.etree import ElementTree as ET
 import hashlib
-import md5crypt
+from md5crypt import md5crypt
 import traceback
 
 API = 'https://webshare.cz/api/'
