@@ -101,6 +101,22 @@ msgctxt "#30103"
 msgid "You do not have a valid VIP."
 msgstr "Nemáte platné VIP."
 
+msgctxt "#30104"
+msgid "The file has been deleted from history."
+msgstr "Súbor bol vymazaný z histórie."
+
+msgctxt "#30105"
+msgid "The file has been added to Queue."
+msgstr "Súbor bol pridaný do Chcem si stiahnuť."
+
+msgctxt "#30106"
+msgid "The file has been removed from Queue."
+msgstr "Súbor bol vymazaný zo Chcem si stiahnuť."
+
+msgctxt "#30107"
+msgid "An error occurred while communicating with the Webshare API."
+msgstr "Vznikla chyba pri komunikácii s Webshare API."
+
 msgctxt "#30201"
 msgid "Search"
 msgstr "Vyhľadávanie"
@@ -140,4 +156,12 @@ msgstr "Stiahnuť súbor"
 msgctxt "#30213"
 msgid "Remove from history"
 msgstr "Zmazať z histórie"
+
+msgctxt "#30214"
+msgid "Add to Queue"
+msgstr "Pridať do Chcem si stiahnuť"
+
+msgctxt "#30215"
+msgid "Remove from Queue"
+msgstr "Zmazať z Chcem si stiahnuť"
 

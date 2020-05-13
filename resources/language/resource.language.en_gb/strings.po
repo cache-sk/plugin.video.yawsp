@@ -101,6 +101,22 @@ msgctxt "#30103"
 msgid "You do not have a valid VIP."
 msgstr ""
 
+msgctxt "#30104"
+msgid "The file has been deleted from history."
+msgstr ""
+
+msgctxt "#30105"
+msgid "The file has been added to Queue."
+msgstr ""
+
+msgctxt "#30106"
+msgid "The file has been removed from Queue."
+msgstr ""
+
+msgctxt "#30107"
+msgid "An error occurred while communicating with the Webshare API."
+msgstr ""
+
 msgctxt "#30201"
 msgid "Search"
 msgstr ""
@@ -139,5 +155,13 @@ msgstr ""
 
 msgctxt "#30213"
 msgid "Remove from history"
+msgstr ""
+
+msgctxt "#30214"
+msgid "Add to Queue"
+msgstr ""
+
+msgctxt "#30215"
+msgid "Remove from Queue"
 msgstr ""
 

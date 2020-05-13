@@ -10,5 +10,6 @@
         <setting label="30020" id="ssort" type="select" lvalues="30021|30022|30023|30024|30025" default="0"/>
         <setting label="30028" id="slimit" type="number" default="25" />
         <setting label="30029" id="shistory" type="number" default="20"/>
+        <setting id="slast" type="text" visible="false" default="%#NONE#%"/>
     </category>
 </settings>

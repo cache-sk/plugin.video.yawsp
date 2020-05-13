@@ -27,6 +27,7 @@ CATEGORIES = ['','video','images','audio','archives','docs','adult']
 SORTS = ['','recent','rating','largest','smallest']
 SEARCH_HISTORY = 'search_history'
 
+
 _url = sys.argv[0]
 _handle = int(sys.argv[1])
 _addon = xbmcaddon.Addon()
@@ -108,27 +109,29 @@ def todict(xml, skip=[]):
     return result
             
 def sizelize(txtsize, units=['B','KB','MB','GB']):
-    size = float(txtsize)
-    if size < 1024:
-        size = str(size) + units[0]
-    else:
-        size = size / 1024
+    if txtsize:
+        size = float(txtsize)
         if size < 1024:
-            size = str(int(round(size))) + units[1]
+            size = str(size) + units[0]
         else:
             size = size / 1024
             if size < 1024:
-                size = str(round(size,2)) + units[2]
+                size = str(int(round(size))) + units[1]
             else:
                 size = size / 1024
-                size = str(round(size,2)) + units[3]
-    return size
+                if size < 1024:
+                    size = str(round(size,2)) + units[2]
+                else:
+                    size = size / 1024
+                    size = str(round(size,2)) + units[3]
+        return size
+    return str(txtsize)
     
 def labelize(file):
     size = sizelize(file['size'])
     return file['name'] + ' (' + size + ')'
     
-def tolistitem(file):
+def tolistitem(file, addcommands=[]):
     listitem = xbmcgui.ListItem(label=labelize(file))
     if 'img' in file:
         listitem.setArt({'thumb': file['img']})
@@ -137,6 +140,8 @@ def tolistitem(file):
     commands = []
     commands.append(( _addon.getLocalizedString(30211), 'RunPlugin(' + get_url(action='info',ident=file['ident']) + ')'))
     #commands.append(( _addon.getLocalizedString(30212), 'RunPlugin(' + get_url(action='download',ident=file['ident']) + ')'))
+    if addcommands:
+        commands = commands + addcommands
     listitem.addContextMenuItems(commands)
     return listitem
 
@@ -166,35 +171,37 @@ def loadsearch():
     return history
     
 def storesearch(what):
-    size = int(_addon.getSetting('shistory'))
+    if what:
+        size = int(_addon.getSetting('shistory'))
 
-    history = loadsearch()
+        history = loadsearch()
 
-    if what in history:
-        history.remove(what)
+        if what in history:
+            history.remove(what)
 
-    history = [what] + history
-    
-    if len(history)>size:
-        history = history[:size]
+        history = [what] + history
+        
+        if len(history)>size:
+            history = history[:size]
 
-    try:
-        with io.open(os.path.join(_profile, SEARCH_HISTORY), 'w', encoding='utf8') as file:
-            file.write(json.dumps(history).decode('utf8'))
-            file.close()
-    except Exception as e:
-        traceback.print_exc()
-
-def removesearch(what):
-    history = loadsearch()
-    if what in history:
-        history.remove(what)
         try:
             with io.open(os.path.join(_profile, SEARCH_HISTORY), 'w', encoding='utf8') as file:
                 file.write(json.dumps(history).decode('utf8'))
                 file.close()
         except Exception as e:
             traceback.print_exc()
+
+def removesearch(what):
+    if what:
+        history = loadsearch()
+        if what in history:
+            history.remove(what)
+            try:
+                with io.open(os.path.join(_profile, SEARCH_HISTORY), 'w', encoding='utf8') as file:
+                    file.write(json.dumps(history).decode('utf8'))
+                    file.close()
+            except Exception as e:
+                traceback.print_exc()
 
 def search(params):
     xbmcplugin.setPluginCategory(_handle, _addon.getAddonInfo('name') + " \ " + _addon.getLocalizedString(30201))
@@ -205,6 +212,10 @@ def search(params):
     if 'remove' in params:
         removesearch(params['remove'])
         updateListing=True
+        
+    if 'toqueue' in params:
+        toqueue(params['toqueue'],token)
+        updateListing=True
     
     what = None
     if 'what' in params:
@@ -214,8 +225,13 @@ def search(params):
 
     if what is not None:
         if 'offset' not in params:
-            what = ask(what)
-            storesearch(what)
+            slast = _addon.getSetting('slast')
+            if slast == what:
+                _addon.setSetting('slast','%#NONE#%')
+            else:
+                what = ask(what)
+                storesearch(what)
+                _addon.setSetting('slast',what)
         else: 
             updateListing=True
         
@@ -234,7 +250,9 @@ def search(params):
                 
             for file in xml.iter('file'):
                 item = todict(file)
-                listitem = tolistitem(item)
+                commands = []
+                commands.append(( _addon.getLocalizedString(30214), 'Container.Update(' + get_url(action='search',toqueue=item['ident'], what=what, offset=offset) + ')'))
+                listitem = tolistitem(item,commands)
                 xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=item['ident'],name=item['name']), listitem, False)
             
             try:
@@ -246,6 +264,8 @@ def search(params):
                 listitem = xbmcgui.ListItem(label=_addon.getLocalizedString(30207))
                 listitem.setArt({'icon': 'DefaultAddonsSearch.png'})
                 xbmcplugin.addDirectoryItem(_handle, get_url(action='search', what=what, offset=offset+limit), listitem, True)
+        else:
+            popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
     else:
         history = loadsearch()
         listitem = xbmcgui.ListItem(label=_addon.getLocalizedString(30205))
@@ -264,19 +284,67 @@ def search(params):
 def queue(params):
     xbmcplugin.setPluginCategory(_handle, _addon.getAddonInfo('name') + " \ " + _addon.getLocalizedString(30202))
     token = revalidate()
+    updateListing=False
+    
+    if 'dequeue' in params:
+        response = api('dequeue_file',{'ident':params['dequeue'],'wst':token})
+        xml = ET.fromstring(response.content)
+        if is_ok(xml):
+            popinfo(_addon.getLocalizedString(30106))
+        else:
+            popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
+        updateListing=True
+    
     response = api('queue',{'wst':token})
     xml = ET.fromstring(response.content)
     if is_ok(xml):
         for file in xml.iter('file'):
             item = todict(file)
-            listitem = tolistitem(item)
-            #TODO remove from queue
+            commands = []
+            commands.append(( _addon.getLocalizedString(30215), 'Container.Update(' + get_url(action='queue',dequeue=item['ident']) + ')'))
+            listitem = tolistitem(item,commands)
             xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=item['ident'],name=item['name']), listitem, False)
-    xbmcplugin.endOfDirectory(_handle)
+    else:
+        popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
+    xbmcplugin.endOfDirectory(_handle,updateListing=updateListing)
+
+def toqueue(ident,token):
+    response = api('queue_file',{'ident':ident,'wst':token})
+    xml = ET.fromstring(response.content)
+    if is_ok(xml):
+        popinfo(_addon.getLocalizedString(30105))
+    else:
+        popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
 
 def history(params):
     xbmcplugin.setPluginCategory(_handle, _addon.getAddonInfo('name') + " \ " + _addon.getLocalizedString(30203))
     token = revalidate()
+    updateListing=False
+    
+    if 'remove' in params:
+        remove = params['remove']
+        updateListing=True
+        response = api('history',{'wst':token})
+        xml = ET.fromstring(response.content)
+        ids = []
+        if is_ok(xml):
+            for file in xml.iter('file'):
+                if remove == file.find('ident').text:
+                    ids.append(file.find('download_id').text)
+        else:
+            popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
+        if ids:
+            rr = api('clear_history',{'ids[]':ids,'wst':token})
+            xml = ET.fromstring(rr.content)
+            if is_ok(xml):
+                popinfo(_addon.getLocalizedString(30104))
+            else:
+                popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
+    
+    if 'toqueue' in params:
+        toqueue(params['toqueue'],token)
+        updateListing=True
+    
     response = api('history',{'wst':token})
     xml = ET.fromstring(response.content)
     files = []
@@ -286,10 +354,14 @@ def history(params):
             if item not in files:
                 files.append(item)
         for file in files:
-            listitem = tolistitem(file)
-            #TODO remove from history
+            commands = []
+            commands.append(( _addon.getLocalizedString(30213), 'Container.Update(' + get_url(action='history',remove=file['ident']) + ')'))
+            commands.append(( _addon.getLocalizedString(30214), 'Container.Update(' + get_url(action='history',toqueue=file['ident']) + ')'))
+            listitem = tolistitem(file, commands)
             xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=file['ident'],name=item['name']), listitem, False)
-    xbmcplugin.endOfDirectory(_handle)
+    else:
+        popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
+    xbmcplugin.endOfDirectory(_handle,updateListing=updateListing)
     
 def settings(params):
     _addon.openSettings()
@@ -345,7 +417,7 @@ def info(params):
             
         xbmcgui.Dialog().textviewer(_addon.getAddonInfo('name'), text)
     else:
-        popinfo('TODO err', sound=True)
+        popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
 
 def play(params):
     token = revalidate()
@@ -360,6 +432,7 @@ def play(params):
     if is_ok(xml):
         xbmcplugin.setResolvedUrl(_handle, True, xbmcgui.ListItem(label=params['name'],path=xml.find('link').text))
     else:
+        popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
         xbmcplugin.setResolvedUrl(_handle, False, xbmcgui.ListItem())
 
 def download(params):
