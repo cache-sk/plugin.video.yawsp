@@ -145,6 +145,14 @@ msgctxt "#30207"
 msgid "next page"
 msgstr "nasledujúca stránka"
 
+msgctxt "#30208"
+msgid "Most recent on Webshare"
+msgstr "Najnovšie na Webshare"
+
+msgctxt "#30209"
+msgid "Biggest on Webshare"
+msgstr "Najväčšie na Webshare"
+
 msgctxt "#30211"
 msgid "File information"
 msgstr "Informácie o súbore"
