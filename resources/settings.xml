@@ -11,5 +11,10 @@
         <setting label="30028" id="slimit" type="number" default="25" />
         <setting label="30029" id="shistory" type="number" default="20"/>
         <setting id="slast" type="text" visible="false" default="%#NONE#%"/>
+        <setting type="lsep" label="30040" />
+		<setting label="30041" id="dfolder" type="folder" default="" />
+        <setting label="30042" id="dnormalize" type="bool" default="true" />
+		<setting label="30043" id="dnotify" type="bool" default="true" />
+		<setting label="30044" id="dnevery" type="select" values="1%|5%|10%|20%|25%|50%" default="10%" visible="eq(-1,true)" />
     </category>
 </settings>

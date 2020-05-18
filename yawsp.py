@@ -19,9 +19,13 @@ import hashlib
 from md5crypt import md5crypt
 import traceback
 import json
+import unidecode
+import re
 
-API = 'https://webshare.cz/api/'
+BASE = 'https://webshare.cz'
+API = BASE + '/api/'
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+HEADERS = {'User-Agent': UA, 'Referer':BASE}
 REALM = ':Webshare:'
 CATEGORIES = ['','video','images','audio','archives','docs','adult']
 SORTS = ['','recent','rating','largest','smallest']
@@ -32,7 +36,7 @@ _url = sys.argv[0]
 _handle = int(sys.argv[1])
 _addon = xbmcaddon.Addon()
 _session = requests.Session()
-_session.headers.update({'User-Agent': UA})
+_session.headers.update(HEADERS)
 _profile = xbmc.translatePath( _addon.getAddonInfo('profile')).decode("utf-8")
 
 def get_url(**kwargs):
@@ -139,7 +143,7 @@ def tolistitem(file, addcommands=[]):
     listitem.setProperty('IsPlayable', 'true')
     commands = []
     commands.append(( _addon.getLocalizedString(30211), 'RunPlugin(' + get_url(action='info',ident=file['ident']) + ')'))
-    #commands.append(( _addon.getLocalizedString(30212), 'RunPlugin(' + get_url(action='download',ident=file['ident']) + ')'))
+    commands.append(( _addon.getLocalizedString(30212), 'RunPlugin(' + get_url(action='download',ident=file['ident']) + ')'))
     if addcommands:
         commands = commands + addcommands
     listitem.addContextMenuItems(commands)
@@ -396,21 +400,29 @@ def fpsize(fps):
     if int(x) == x:
        return str(int(x))
     return str(x)
-
-def info(params):
-    token = revalidate()
-    response = api('file_info',{'ident':params['ident'],'wst': token})
+    
+def getinfo(ident,wst):
+    response = api('file_info',{'ident':ident,'wst': wst})
     xml = ET.fromstring(response.content)
     ok = is_ok(xml)
     if not ok:
-        response = api('file_info',{'ident':params['ident'],'wst': token, 'maybe_removed':'true'})
+        response = api('file_info',{'ident':ident,'wst': wst, 'maybe_removed':'true'})
         xml = ET.fromstring(response.content)
         ok = is_ok(xml)
-    
     if ok:
+        return xml
+    else:
+        popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
+        return None
+
+def info(params):
+    token = revalidate()
+    xml = getinfo(params['ident'],token)
+    
+    if xml is not None:
         info = todict(xml)
         text = ''
-        text += infonize(info, 'name', lambda x:x)
+        text += infonize(info, 'name')
         text += infonize(info, 'size', sizelize)
         text += infonize(info, 'type')
         text += infonize(info, 'width')
@@ -439,14 +451,11 @@ def info(params):
                 text += infonize(stream,'channels', prefix=', ', showkey=False, suffix='')
                 text += infonize(stream,'bitrate', lambda x:sizelize(x,['bps','Kbps','Mbps','Gbps']), prefix=', ', showkey=False, suffix='')
                 text += '\n'
-            
+        text += infonize(info, 'removed', lambda x:'Yes' if x=='1' else 'No')
         xbmcgui.Dialog().textviewer(_addon.getAddonInfo('name'), text)
-    else:
-        popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
 
-def play(params):
-    token = revalidate()
-    data = {'ident':params['ident'],'wst': token}
+def getlink(ident,wst):
+    data = {'ident':ident,'wst': wst}
     #TODO password protect
     #response = api('file_protected',data) #protected
     #xml = ET.fromstring(response.content)
@@ -455,16 +464,71 @@ def play(params):
     response = api('file_link',data)
     xml = ET.fromstring(response.content)
     if is_ok(xml):
-        xbmcplugin.setResolvedUrl(_handle, True, xbmcgui.ListItem(label=params['name'],path=xml.find('link').text))
+        return xml.find('link').text
+    else:
+        popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
+        return None
+
+def play(params):
+    token = revalidate()
+    link = getlink(params['ident'],token)
+    if link is not None:
+        xbmcplugin.setResolvedUrl(_handle, True, xbmcgui.ListItem(label=params['name'],path=link))
     else:
         popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
         xbmcplugin.setResolvedUrl(_handle, False, xbmcgui.ListItem())
 
 def download(params):
-    pass
-    #TODO download
-    #token = revalidate()
-    #xbmcplugin.setResolvedUrl(_handle, False, xbmcgui.ListItem())
+    token = revalidate()
+    where = _addon.getSetting('dfolder')
+    if not where or not os.path.exists(where):
+        popinfo('set folder!', sound=True)#_addon.getLocalizedString(30101)
+        _addon.openSettings()
+        return
+        
+    normalize = 'true' == _addon.getSetting('dnormalize')
+    notify = 'true' == _addon.getSetting('dnotify')
+    every = _addon.getSetting('dnevery')
+    try:
+        every = int(re.sub(r'[^\d]+', '', every))
+    except:
+        every = 10
+        
+    try:
+        link = getlink(params['ident'],token)
+        info = getinfo(params['ident'],token)
+        name = info.find('name').text
+        if normalize:
+            name = unidecode.unidecode(name)
+        with io.open(os.path.join(where,name), 'wb') as bf:
+            response = _session.get(link, stream=True)
+            total = response.headers.get('content-length')
+            if total is None:
+                popinfo(_addon.getLocalizedString(30301) + name, icon=xbmcgui.NOTIFICATION_WARNING, sound=True)
+                bf.write(response.content)
+            elif not notify:
+                popinfo(_addon.getLocalizedString(30302) + name)
+                bf.write(response.content)
+            else:
+                popinfo(_addon.getLocalizedString(30302) + name)
+                dl = 0
+                total = int(total)
+                pct = total / 100
+                lastpop=0
+                for data in response.iter_content(chunk_size=4096):
+                    dl += len(data)
+                    bf.write(data)
+                    done = int(dl / pct)
+                    if done % every == 0 and lastpop != done:
+                        popinfo(str(done) + '% - ' + name)
+                        lastpop = done
+            bf.flush()
+            bf.close()
+            popinfo(_addon.getLocalizedString(30303) + name, sound=True)
+    except Exception as e:
+        #TODO - remove unfinished file?
+        traceback.print_exc()
+        popinfo(_addon.getLocalizedString(30304) + name, icon=xbmcgui.NOTIFICATION_ERROR, sound=True)
 
 def menu():
     revalidate()
