@@ -132,7 +132,12 @@ def sizelize(txtsize, units=['B','KB','MB','GB']):
     return str(txtsize)
     
 def labelize(file):
-    size = sizelize(file['size'])
+    if 'size' in file:
+        size = sizelize(file['size'])
+    elif 'sizelized' in file:
+        size = file['sizelized']
+    else:
+        size = '?'
     return file['name'] + ' (' + size + ')'
     
 def tolistitem(file, addcommands=[]):
@@ -530,6 +535,48 @@ def download(params):
         traceback.print_exc()
         popinfo(_addon.getLocalizedString(30304) + name, icon=xbmcgui.NOTIFICATION_ERROR, sound=True)
 
+def loaddb(dbdir,file):
+    try:
+        data = {}
+        with io.open(os.path.join(dbdir, file), 'r', encoding='utf8') as file:
+            fdata = file.read()
+            file.close()
+            data = json.loads(fdata, "utf-8")
+        return data
+    except Exception as e:
+        traceback.print_exc()
+        return {}
+
+def db(params):
+    dbdir = os.path.join(_profile,'db')
+    updateListing=False
+    
+    if 'toqueue' in params:
+        toqueue(params['toqueue'],token)
+        updateListing=True
+    
+    if 'file' in params and 'key' in params:
+        data = loaddb(dbdir,params['file'])
+        item = data[params['key']] #TODO chceck?
+        for stream in item['streams']: #TODO check?
+            commands = []
+            commands.append(( _addon.getLocalizedString(30214), 'Container.Update(' + get_url(action='db',file=params['file'],key=params['key'],toqueue=stream['ident']) + ')'))
+            listitem = tolistitem({'ident':stream['ident'],'name':stream['quality'] + ' ' + stream['lang'] + ' ' + stream['ainfo'],'sizelized':stream['size']},commands)
+            xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=stream['ident'],name=item['title']), listitem, False)
+    elif 'file' in params:
+        data = loaddb(dbdir,params['file'])
+        for key in data.keys():
+            item = data[key]
+            listitem = xbmcgui.ListItem(label=item['title'])
+            xbmcplugin.addDirectoryItem(_handle, get_url(action='db',file=params['file'],key=key), listitem, True)
+    else:
+        if os.path.exists(dbdir):
+            dbfiles = [f for f in os.listdir(dbdir) if os.path.isfile(os.path.join(dbdir, f))]
+            for dbfile in dbfiles:
+                listitem = xbmcgui.ListItem(label=os.path.splitext(dbfile)[0])
+                xbmcplugin.addDirectoryItem(_handle, get_url(action='db',file=dbfile), listitem, True)
+    xbmcplugin.endOfDirectory(_handle, updateListing=updateListing)
+
 def menu():
     revalidate()
     xbmcplugin.setPluginCategory(_handle, _addon.getAddonInfo('name'))
@@ -545,9 +592,15 @@ def menu():
     listitem.setArt({'icon': 'DefaultAddonsUpdates.png'})
     xbmcplugin.addDirectoryItem(_handle, get_url(action='history'), listitem, True)
     
+    if os.path.exists(os.path.join(_profile,'db')):
+        listitem = xbmcgui.ListItem(label='Backup DB :)')
+        listitem.setArt({'icon': 'DefaultAddonsZip.png'})
+        xbmcplugin.addDirectoryItem(_handle, get_url(action='db'), listitem, True)
+
     listitem = xbmcgui.ListItem(label=_addon.getLocalizedString(30204))
     listitem.setArt({'icon': 'DefaultAddonService.png'})
     xbmcplugin.addDirectoryItem(_handle, get_url(action='settings'), listitem, False)
+
     xbmcplugin.endOfDirectory(_handle)
 
 def router(paramstring):
@@ -567,6 +620,8 @@ def router(paramstring):
             play(params)
         elif params['action'] == 'download':
             download(params)
+        elif params['action'] == 'db':
+            db(params)
         else:
             menu()
     else:
