@@ -140,13 +140,15 @@ def labelize(file):
         size = file['sizelized']
     else:
         size = '?'
-    return file['name'] + ' (' + size + ')'
+    label = file['name'] + ' (' + size + ')'
+    return label
     
 def tolistitem(file, addcommands=[]):
-    listitem = xbmcgui.ListItem(label=labelize(file))
+    label = labelize(file)
+    listitem = xbmcgui.ListItem(label=label)
     if 'img' in file:
         listitem.setArt({'thumb': file['img']})
-    listitem.setInfo('video', {'title': file['name']})
+    listitem.setInfo('video', {'title': label})
     listitem.setProperty('IsPlayable', 'true')
     commands = []
     commands.append(( _addon.getLocalizedString(30211), 'RunPlugin(' + get_url(action='info',ident=file['ident']) + ')'))
@@ -577,7 +579,7 @@ def db(params):
             for stream in item['streams']:
                 commands = []
                 commands.append(( _addon.getLocalizedString(30214), 'Container.Update(' + get_url(action='db',file=params['file'],key=params['key'],toqueue=stream['ident']) + ')'))
-                listitem = tolistitem({'ident':stream['ident'],'name':stream['quality'] + ' ' + stream['lang'] + ' ' + stream['ainfo'],'sizelized':stream['size']},commands)
+                listitem = tolistitem({'ident':stream['ident'],'name':stream['quality'] + ' - ' + stream['lang'] + stream['ainfo'],'sizelized':stream['size']},commands)
                 xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=stream['ident'],name=item['title']), listitem, False)
     elif 'file' in params:
         data = loaddb(dbdir,params['file'])
@@ -592,6 +594,7 @@ def db(params):
             for dbfile in dbfiles:
                 listitem = xbmcgui.ListItem(label=os.path.splitext(dbfile)[0])
                 xbmcplugin.addDirectoryItem(_handle, get_url(action='db',file=dbfile), listitem, True)
+    xbmcplugin.addSortMethod(_handle,xbmcplugin.SORT_METHOD_LABEL)
     xbmcplugin.endOfDirectory(_handle, updateListing=updateListing)
 
 def menu():
