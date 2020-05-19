@@ -109,6 +109,10 @@ msgctxt "#30044"
 msgid "Notify every"
 msgstr ""
 
+msgctxt "#30051"
+msgid "Experimental functions"
+msgstr ""
+
 msgctxt "#30101"
 msgid "To use this plugin, you must enter Webshare account in the settings."
 msgstr ""

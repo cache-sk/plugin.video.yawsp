@@ -21,6 +21,7 @@ import traceback
 import json
 import unidecode
 import re
+import zipfile
 
 BASE = 'https://webshare.cz'
 API = BASE + '/api/'
@@ -31,6 +32,7 @@ CATEGORIES = ['','video','images','audio','archives','docs','adult']
 SORTS = ['','recent','rating','largest','smallest']
 SEARCH_HISTORY = 'search_history'
 NONE_WHAT = '%#NONE#%'
+BACKUP_DB = 'D1iIcURxlR'
 
 _url = sys.argv[0]
 _handle = int(sys.argv[1])
@@ -541,15 +543,28 @@ def loaddb(dbdir,file):
         with io.open(os.path.join(dbdir, file), 'r', encoding='utf8') as file:
             fdata = file.read()
             file.close()
-            data = json.loads(fdata, "utf-8")
+            data = json.loads(fdata, "utf-8")['data']
         return data
     except Exception as e:
         traceback.print_exc()
         return {}
 
 def db(params):
-    dbdir = os.path.join(_profile,'db')
+    token = revalidate()
     updateListing=False
+
+    dbdir = os.path.join(_profile,'db')
+    if not os.path.exists(dbdir):
+        link = getlink(BACKUP_DB,token)
+        dbfile = os.path.join(_profile,'db.zip')
+        with io.open(dbfile, 'wb') as bf:
+            response = _session.get(link, stream=True)
+            bf.write(response.content)
+            bf.flush()
+            bf.close()
+        with zipfile.ZipFile(dbfile, 'r') as zf:
+            zf.extractall(_profile)
+        os.unlink(dbfile)
     
     if 'toqueue' in params:
         toqueue(params['toqueue'],token)
@@ -557,18 +572,20 @@ def db(params):
     
     if 'file' in params and 'key' in params:
         data = loaddb(dbdir,params['file'])
-        item = data[params['key']] #TODO chceck?
-        for stream in item['streams']: #TODO check?
-            commands = []
-            commands.append(( _addon.getLocalizedString(30214), 'Container.Update(' + get_url(action='db',file=params['file'],key=params['key'],toqueue=stream['ident']) + ')'))
-            listitem = tolistitem({'ident':stream['ident'],'name':stream['quality'] + ' ' + stream['lang'] + ' ' + stream['ainfo'],'sizelized':stream['size']},commands)
-            xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=stream['ident'],name=item['title']), listitem, False)
+        item = next((x for x in data if x['id'] == params['key']), None)
+        if item is not None:
+            for stream in item['streams']:
+                commands = []
+                commands.append(( _addon.getLocalizedString(30214), 'Container.Update(' + get_url(action='db',file=params['file'],key=params['key'],toqueue=stream['ident']) + ')'))
+                listitem = tolistitem({'ident':stream['ident'],'name':stream['quality'] + ' ' + stream['lang'] + ' ' + stream['ainfo'],'sizelized':stream['size']},commands)
+                xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=stream['ident'],name=item['title']), listitem, False)
     elif 'file' in params:
         data = loaddb(dbdir,params['file'])
-        for key in data.keys():
-            item = data[key]
+        for item in data:
             listitem = xbmcgui.ListItem(label=item['title'])
-            xbmcplugin.addDirectoryItem(_handle, get_url(action='db',file=params['file'],key=key), listitem, True)
+            if 'plot' in item:
+                listitem.setInfo('video', {'title': item['title'],'plot': item['plot']})
+            xbmcplugin.addDirectoryItem(_handle, get_url(action='db',file=params['file'],key=item['id']), listitem, True)
     else:
         if os.path.exists(dbdir):
             dbfiles = [f for f in os.listdir(dbdir) if os.path.isfile(os.path.join(dbdir, f))]
@@ -592,8 +609,8 @@ def menu():
     listitem.setArt({'icon': 'DefaultAddonsUpdates.png'})
     xbmcplugin.addDirectoryItem(_handle, get_url(action='history'), listitem, True)
     
-    if os.path.exists(os.path.join(_profile,'db')):
-        listitem = xbmcgui.ListItem(label='Backup DB :)')
+    if 'true' == _addon.getSetting('experimental'):
+        listitem = xbmcgui.ListItem(label='Backup DB')
         listitem.setArt({'icon': 'DefaultAddonsZip.png'})
         xbmcplugin.addDirectoryItem(_handle, get_url(action='db'), listitem, True)
 
