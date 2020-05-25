@@ -11,6 +11,7 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 import xbmcaddon
+import xbmcvfs
 import requests
 from urllib import urlencode
 from urlparse import parse_qsl, urlparse
@@ -487,13 +488,21 @@ def play(params):
         popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
         xbmcplugin.setResolvedUrl(_handle, False, xbmcgui.ListItem())
 
+def join(path, file):
+    if path.endswith('/') or path.endswith('\\'):
+        return path + file
+    else:
+        return path + '/' + file
+
 def download(params):
     token = revalidate()
     where = _addon.getSetting('dfolder')
-    if not where or not os.path.exists(where):
+    if not where or not xbmcvfs.exists(where):
         popinfo('set folder!', sound=True)#_addon.getLocalizedString(30101)
         _addon.openSettings()
         return
+        
+    local = os.path.exists(where)
         
     normalize = 'true' == _addon.getSetting('dnormalize')
     notify = 'true' == _addon.getSetting('dnotify')
@@ -509,31 +518,30 @@ def download(params):
         name = info.find('name').text
         if normalize:
             name = unidecode.unidecode(name)
-        with io.open(os.path.join(where,name), 'wb') as bf:
-            response = _session.get(link, stream=True)
-            total = response.headers.get('content-length')
-            if total is None:
-                popinfo(_addon.getLocalizedString(30301) + name, icon=xbmcgui.NOTIFICATION_WARNING, sound=True)
-                bf.write(response.content)
-            elif not notify:
-                popinfo(_addon.getLocalizedString(30302) + name)
-                bf.write(response.content)
-            else:
-                popinfo(_addon.getLocalizedString(30302) + name)
-                dl = 0
-                total = int(total)
-                pct = total / 100
-                lastpop=0
-                for data in response.iter_content(chunk_size=4096):
-                    dl += len(data)
-                    bf.write(data)
-                    done = int(dl / pct)
-                    if done % every == 0 and lastpop != done:
-                        popinfo(str(done) + '% - ' + name)
-                        lastpop = done
-            bf.flush()
-            bf.close()
-            popinfo(_addon.getLocalizedString(30303) + name, sound=True)
+        bf = io.open(os.path.join(where,name), 'wb') if local else xbmcvfs.File(join(where,name), 'w')
+        response = _session.get(link, stream=True)
+        total = response.headers.get('content-length')
+        if total is None:
+            popinfo(_addon.getLocalizedString(30301) + name, icon=xbmcgui.NOTIFICATION_WARNING, sound=True)
+            bf.write(response.content)
+        elif not notify:
+            popinfo(_addon.getLocalizedString(30302) + name)
+            bf.write(response.content)
+        else:
+            popinfo(_addon.getLocalizedString(30302) + name)
+            dl = 0
+            total = int(total)
+            pct = total / 100
+            lastpop=0
+            for data in response.iter_content(chunk_size=4096):
+                dl += len(data)
+                bf.write(data)
+                done = int(dl / pct)
+                if done % every == 0 and lastpop != done:
+                    popinfo(str(done) + '% - ' + name)
+                    lastpop = done
+        bf.close()
+        popinfo(_addon.getLocalizedString(30303) + name, sound=True)
     except Exception as e:
         #TODO - remove unfinished file?
         traceback.print_exc()
