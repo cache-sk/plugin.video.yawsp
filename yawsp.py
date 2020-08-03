@@ -12,7 +12,7 @@ import xbmcgui
 import xbmcplugin
 import xbmcaddon
 import xbmcvfs
-import requests
+import requests.cookies
 from urllib import urlencode
 from urlparse import parse_qsl, urlparse
 from xml.etree import ElementTree as ET
@@ -23,6 +23,7 @@ import json
 import unidecode
 import re
 import zipfile
+import uuid
 
 BASE = 'https://webshare.cz'
 API = BASE + '/api/'
@@ -46,6 +47,7 @@ def get_url(**kwargs):
     return '{0}?{1}'.format(_url, urlencode(kwargs, 'utf-8'))
 
 def api(fnct, data):
+    #print 'api call!', fnct, data
     response = _session.post(API + fnct + "/", data=data)
     return response
 
@@ -391,7 +393,7 @@ def history(params):
             commands.append(( _addon.getLocalizedString(30213), 'Container.Update(' + get_url(action='history',remove=file['ident']) + ')'))
             commands.append(( _addon.getLocalizedString(30214), 'Container.Update(' + get_url(action='history',toqueue=file['ident']) + ')'))
             listitem = tolistitem(file, commands)
-            xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=file['ident'],name=item['name']), listitem, False)
+            xbmcplugin.addDirectoryItem(_handle, get_url(action='play',ident=file['ident'],name=file['name']), listitem, False)
     else:
         popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
     xbmcplugin.endOfDirectory(_handle,updateListing=updateListing)
@@ -464,8 +466,13 @@ def info(params):
         text += infonize(info, 'removed', lambda x:'Yes' if x=='1' else 'No')
         xbmcgui.Dialog().textviewer(_addon.getAddonInfo('name'), text)
 
-def getlink(ident,wst):
-    data = {'ident':ident,'wst': wst}
+def getlink(ident,wst,dtype='video_stream'):
+    #uuid experiment
+    duuid = _addon.getSetting('duuid')
+    if not duuid:
+        duuid = str(uuid.uuid4())
+        _addon.setSetting('duuid',duuid)
+    data = {'ident':ident,'wst': wst,'download_type':dtype,'device_uuid':duuid}
     #TODO password protect
     #response = api('file_protected',data) #protected
     #xml = ET.fromstring(response.content)
@@ -483,7 +490,14 @@ def play(params):
     token = revalidate()
     link = getlink(params['ident'],token)
     if link is not None:
-        xbmcplugin.setResolvedUrl(_handle, True, xbmcgui.ListItem(label=params['name'],path=link))
+        #headers experiment
+        headers = _session.headers
+        if headers:
+            headers.update({'Cookie':'wst='+token})
+            link = link + '|' + urlencode(headers)
+        listitem = xbmcgui.ListItem(label=params['name'],path=link)
+        listitem.setProperty('mimetype', 'application/octet-stream')
+        xbmcplugin.setResolvedUrl(_handle, True, listitem)
     else:
         popinfo(_addon.getLocalizedString(30107), icon=xbmcgui.NOTIFICATION_WARNING)
         xbmcplugin.setResolvedUrl(_handle, False, xbmcgui.ListItem())
@@ -513,7 +527,7 @@ def download(params):
         every = 10
         
     try:
-        link = getlink(params['ident'],token)
+        link = getlink(params['ident'],token,'file_download')
         info = getinfo(params['ident'],token)
         name = info.find('name').text
         if normalize:
