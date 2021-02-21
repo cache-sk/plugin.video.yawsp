@@ -17,9 +17,9 @@
 
 SYNOPSIS
 
-	import md5crypt.py
+    import md5crypt.py
 
-	cryptedpassword = md5crypt.md5crypt(password, salt);
+    cryptedpassword = md5crypt.md5crypt(password, salt);
 
 DESCRIPTION
 
@@ -47,8 +47,8 @@ def to64 (v, n):
     ret = ''
     while (n - 1 >= 0):
         n = n - 1
-	ret = ret + ITOA64[v & 0x3f]
-	v = v >> 6
+        ret = ret + ITOA64[v & 0x3f]
+        v = v >> 6
     return ret
 
 
@@ -69,10 +69,18 @@ def unix_md5_crypt(pw, salt, magic=None):
 
     # salt can have up to 8 characters:
     import string
-    salt = string.split(salt, '$', 1)[0]
+    
+    try:
+        salt = string.split(salt, '$', 1)[0]
+    except AttributeError:
+        salt = salt.decode("utf-8").split('$', 1)[0].encode("utf-8")
+    
     salt = salt[:8]
-
-    ctx = pw + magic + salt
+    
+    try:
+        ctx = pw + magic + salt
+    except TypeError:
+        ctx = pw + magic.encode("utf-8") + salt
 
     final = hashlib.md5(pw + salt + pw).digest()
 
@@ -88,9 +96,15 @@ def unix_md5_crypt(pw, salt, magic=None):
     i = len(pw)
     while i:
         if i & 1:
-            ctx = ctx + chr(0)  #if ($i & 1) { $ctx->add(pack("C", 0)); }
+            try:
+                ctx = ctx + chr(0)  #if ($i & 1) { $ctx->add(pack("C", 0)); }
+            except TypeError:
+                ctx = ctx + chr(0).encode("utf-8")
         else:
-            ctx = ctx + pw[0]
+            try:
+                ctx = ctx + pw[0]
+            except TypeError:
+                ctx = ctx + chr(pw[0]).encode("utf-8")
         i = i >> 1
 
     final = hashlib.md5(ctx).digest()
@@ -101,7 +115,8 @@ def unix_md5_crypt(pw, salt, magic=None):
     # my question: WTF???
 
     for i in range(1000):
-        ctx1 = ''
+        ctx1 = ''.encode("utf-8")
+
         if i & 1:
             ctx1 = ctx1 + pw
         else:
@@ -123,37 +138,59 @@ def unix_md5_crypt(pw, salt, magic=None):
 
 
     # Final xform
-
+    
     passwd = ''
 
-    passwd = passwd + to64((int(ord(final[0])) << 16)
-                           |(int(ord(final[6])) << 8)
-                           |(int(ord(final[12]))),4)
+    try:
+        passwd = passwd + to64((int(ord(final[0])) << 16)
+                               |(int(ord(final[6])) << 8)
+                               |(int(ord(final[12]))),4)
 
-    passwd = passwd + to64((int(ord(final[1])) << 16)
-                           |(int(ord(final[7])) << 8)
-                           |(int(ord(final[13]))), 4)
+        passwd = passwd + to64((int(ord(final[1])) << 16)
+                               |(int(ord(final[7])) << 8)
+                               |(int(ord(final[13]))), 4)
 
-    passwd = passwd + to64((int(ord(final[2])) << 16)
-                           |(int(ord(final[8])) << 8)
-                           |(int(ord(final[14]))), 4)
+        passwd = passwd + to64((int(ord(final[2])) << 16)
+                               |(int(ord(final[8])) << 8)
+                               |(int(ord(final[14]))), 4)
 
-    passwd = passwd + to64((int(ord(final[3])) << 16)
-                           |(int(ord(final[9])) << 8)
-                           |(int(ord(final[15]))), 4)
+        passwd = passwd + to64((int(ord(final[3])) << 16)
+                               |(int(ord(final[9])) << 8)
+                               |(int(ord(final[15]))), 4)
 
-    passwd = passwd + to64((int(ord(final[4])) << 16)
-                           |(int(ord(final[10])) << 8)
-                           |(int(ord(final[5]))), 4)
+        passwd = passwd + to64((int(ord(final[4])) << 16)
+                               |(int(ord(final[10])) << 8)
+                               |(int(ord(final[5]))), 4)
 
-    passwd = passwd + to64((int(ord(final[11]))), 2)
+        passwd = passwd + to64((int(ord(final[11]))), 2)
 
+        return magic + salt + '$' + passwd
+    except TypeError:
+        passwd = passwd + to64((int(final[0]) << 16)
+                               |(int(final[6]) << 8)
+                               |(int(final[12])),4)
 
-    return magic + salt + '$' + passwd
+        passwd = passwd + to64((int(final[1]) << 16)
+                               |(int(final[7]) << 8)
+                               |(int(final[13])), 4)
 
+        passwd = passwd + to64((int(final[2]) << 16)
+                               |(int(final[8]) << 8)
+                               |(int(final[14])), 4)
+
+        passwd = passwd + to64((int(final[3]) << 16)
+                               |(int(final[9]) << 8)
+                               |(int(final[15])), 4)
+
+        passwd = passwd + to64((int(final[4]) << 16)
+                               |(int(final[10]) << 8)
+                               |(int(final[5])), 4)
+
+        passwd = passwd + to64((int(final[11])), 2)
+        return magic + salt.decode("utf-8") + '$' + passwd
 
 ## assign a wrapper function:
 md5crypt = unix_md5_crypt
 
 if __name__ == "__main__":
-    print unix_md5_crypt("cat", "hat")
+    print (unix_md5_crypt("cat", "hat"))

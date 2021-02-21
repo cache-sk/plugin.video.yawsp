@@ -13,8 +13,6 @@ import xbmcplugin
 import xbmcaddon
 import xbmcvfs
 import requests.cookies
-from urllib import urlencode
-from urlparse import parse_qsl, urlparse
 from xml.etree import ElementTree as ET
 import hashlib
 from md5crypt import md5crypt
@@ -24,6 +22,13 @@ import unidecode
 import re
 import zipfile
 import uuid
+
+try:
+    from urllib import urlencode
+    from urlparse import parse_qsl, urlparse
+except ImportError:
+    from urllib.parse import urlencode
+    from urllib.parse import parse_qsl, urlparse
 
 BASE = 'https://webshare.cz'
 API = BASE + '/api/'
@@ -41,7 +46,11 @@ _handle = int(sys.argv[1])
 _addon = xbmcaddon.Addon()
 _session = requests.Session()
 _session.headers.update(HEADERS)
-_profile = xbmc.translatePath( _addon.getAddonInfo('profile')).decode("utf-8")
+_profile = xbmc.translatePath( _addon.getAddonInfo('profile'))
+try:
+    _profile = _profile.decode("utf-8")
+except:
+    pass
 
 def get_url(**kwargs):
     return '{0}?{1}'.format(_url, urlencode(kwargs, 'utf-8'))
@@ -69,8 +78,12 @@ def login():
     xml = ET.fromstring(response.content)
     if is_ok(xml):
         salt = xml.find('salt').text
-        encrypted_pass = hashlib.sha1(md5crypt(password.encode('utf-8'), salt.encode('utf-8'))).hexdigest()
-        pass_digest = hashlib.md5(username.encode('utf-8') + REALM + encrypted_pass.encode('utf-8')).hexdigest()
+        try:
+            encrypted_pass = hashlib.sha1(md5crypt(password.encode('utf-8'), salt.encode('utf-8'))).hexdigest()
+            pass_digest = hashlib.md5(username.encode('utf-8') + REALM + encrypted_pass.encode('utf-8')).hexdigest()
+        except TypeError:
+            encrypted_pass = hashlib.sha1(md5crypt(password.encode('utf-8'), salt.encode('utf-8')).encode('utf-8')).hexdigest()
+            pass_digest = hashlib.md5(username.encode('utf-8') + REALM.encode('utf-8') + encrypted_pass.encode('utf-8')).hexdigest()
         response = api('login', {'username_or_email': username, 'password': encrypted_pass, 'digest': pass_digest, 'keep_logged_in': 1})
         xml = ET.fromstring(response.content)
         if is_ok(xml):
