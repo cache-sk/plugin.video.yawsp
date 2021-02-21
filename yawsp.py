@@ -56,7 +56,6 @@ def get_url(**kwargs):
     return '{0}?{1}'.format(_url, urlencode(kwargs, 'utf-8'))
 
 def api(fnct, data):
-    #print 'api call!', fnct, data
     response = _session.post(API + fnct + "/", data=data)
     return response
 
@@ -580,7 +579,10 @@ def loaddb(dbdir,file):
         with io.open(os.path.join(dbdir, file), 'r', encoding='utf8') as file:
             fdata = file.read()
             file.close()
-            data = json.loads(fdata, "utf-8")['data']
+            try:
+                data = json.loads(fdata, "utf-8")['data']
+            except TypeError:
+                data = json.loads(fdata)['data']
         return data
     except Exception as e:
         traceback.print_exc()
