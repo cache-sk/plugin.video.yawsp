@@ -194,7 +194,10 @@ def loadsearch():
         with io.open(os.path.join(_profile, SEARCH_HISTORY), 'r', encoding='utf8') as file:
             fdata = file.read()
             file.close()
-            history = json.loads(fdata, "utf-8")
+            try:
+                history = json.loads(fdata, "utf-8")
+            except TypeError:
+                history = json.loads(fdata)
     except Exception as e:
         traceback.print_exc()
 
@@ -216,7 +219,11 @@ def storesearch(what):
 
         try:
             with io.open(os.path.join(_profile, SEARCH_HISTORY), 'w', encoding='utf8') as file:
-                file.write(json.dumps(history).decode('utf8'))
+                try:
+                    data = json.dumps(history).decode('utf8')
+                except AttributeError:
+                    data = json.dumps(history)
+                file.write(data)
                 file.close()
         except Exception as e:
             traceback.print_exc()
@@ -228,7 +235,11 @@ def removesearch(what):
             history.remove(what)
             try:
                 with io.open(os.path.join(_profile, SEARCH_HISTORY), 'w', encoding='utf8') as file:
-                    file.write(json.dumps(history).decode('utf8'))
+                    try:
+                        data = json.dumps(history).decode('utf8')
+                    except AttributeError:
+                        data = json.dumps(history)
+                    file.write(data)
                     file.close()
             except Exception as e:
                 traceback.print_exc()
