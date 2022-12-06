@@ -30,6 +30,11 @@ except ImportError:
     from urllib.parse import urlencode
     from urllib.parse import parse_qsl, urlparse
 
+try:
+    from xbmc import translatePath
+except ImportError:
+    from xbmcvfs import translatePath
+
 BASE = 'https://webshare.cz'
 API = BASE + '/api/'
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
@@ -46,7 +51,7 @@ _handle = int(sys.argv[1])
 _addon = xbmcaddon.Addon()
 _session = requests.Session()
 _session.headers.update(HEADERS)
-_profile = xbmc.translatePath( _addon.getAddonInfo('profile'))
+_profile = translatePath( _addon.getAddonInfo('profile'))
 try:
     _profile = _profile.decode("utf-8")
 except:
